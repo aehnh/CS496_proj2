@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -39,6 +40,7 @@ public class Tab2Fragment extends Fragment {
 
     final public static ArrayList<String> gotten = new ArrayList<String>();
     private static GridView gridView;
+    private static GridViewAdapter gridViewAdapter;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -131,7 +133,8 @@ public class Tab2Fragment extends Fragment {
 
 
         gridView = (GridView) view.findViewById(R.id.gridView);
-        gridView.setAdapter(new GridViewAdapter(getActivity()));
+        gridViewAdapter = new GridViewAdapter(getActivity());
+        gridView.setAdapter(gridViewAdapter);
 
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -147,6 +150,8 @@ public class Tab2Fragment extends Fragment {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 GridViewAdapter.bitmaps.remove(position);
+                // TODO delete from server here
+                gridViewAdapter.notifyDataSetChanged();
                 gridView.invalidateViews();
                 return true;
             }
@@ -199,8 +204,15 @@ public class Tab2Fragment extends Fragment {
                     }
                 }
             }
+            if(photo.getWidth() > 2048) {
+                photo = Bitmap.createScaledBitmap(photo, 2048, photo.getHeight() * 2048 / photo.getWidth(), true);
+            }
+            if(photo.getHeight() > 2048) {
+                photo = Bitmap.createScaledBitmap(photo, photo.getWidth() * 2048 / photo.getHeight(), 2048, true);
+            }
             GridViewAdapter.bitmaps.add(0, photo);
             // TODO send to server here
+            gridViewAdapter.notifyDataSetChanged();
             gridView.invalidateViews();
         }
     }

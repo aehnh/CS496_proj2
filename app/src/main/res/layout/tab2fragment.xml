@@ -12,8 +12,8 @@
         android:layout_height="wrap_content"
         android:numColumns="3"
         android:stretchMode="columnWidth"
-        android:horizontalSpacing="5dp"
-        android:verticalSpacing="5dp"
+        android:horizontalSpacing="2dp"
+        android:verticalSpacing="2dp"
         android:gravity="center"/>
 
     <android.support.design.widget.FloatingActionButton
