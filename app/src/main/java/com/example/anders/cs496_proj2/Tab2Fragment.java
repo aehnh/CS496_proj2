@@ -143,6 +143,15 @@ public class Tab2Fragment extends Fragment {
             }
         });
 
+        gridView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                GridViewAdapter.bitmaps.remove(position);
+                gridView.invalidateViews();
+                return true;
+            }
+        });
+
         return view;
     }
 

@@ -22,7 +22,6 @@
             </intent-filter>
         </activity>
         <activity android:name=".ImageSliderActivity" />
-        <activity android:name=".tester" />
 
         <provider
             android:name="android.support.v4.content.FileProvider"

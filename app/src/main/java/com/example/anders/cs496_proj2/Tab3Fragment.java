@@ -18,18 +18,6 @@ public class Tab3Fragment extends Fragment {
 
         View view = inflater.inflate(R.layout.base_tab, container, false);
 
-        TextView textView = (TextView)view.findViewById(R.id.textView1234);
-        if(!Tab2Fragment.gotten.isEmpty()) {
-            //textView.setText((Tab2Fragment.gotten).get(0));
-        }
-        textView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getActivity().getApplicationContext(), tester.class);
-                startActivity(intent);
-            }
-        });
-
         return view;
     }
 }
