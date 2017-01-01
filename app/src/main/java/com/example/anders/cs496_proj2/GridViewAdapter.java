@@ -1,6 +1,7 @@
 package com.example.anders.cs496_proj2;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,8 +9,12 @@ import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 
+import java.util.ArrayList;
+
 public class GridViewAdapter extends BaseAdapter {
     private Context context;
+
+    final public static ArrayList<Bitmap> bitmaps = new ArrayList<Bitmap>();
 
     public Integer[] imageIds = {
             R.drawable.dog1, R.drawable.dog2, R.drawable.dog3, R.drawable.dog4,
@@ -25,12 +30,12 @@ public class GridViewAdapter extends BaseAdapter {
 
     @Override
     public int getCount() {
-        return imageIds.length;
+        return bitmaps.size();
     }
 
     @Override
     public Object getItem(int position) {
-        return imageIds[position];
+        return bitmaps.get(position);
     }
 
     @Override
@@ -50,7 +55,7 @@ public class GridViewAdapter extends BaseAdapter {
         } else {
             image = (ImageView) convertView;
         }
-        image.setImageResource(imageIds[position]);
+        image.setImageBitmap(bitmaps.get(position));
         return image;
     }
 }
