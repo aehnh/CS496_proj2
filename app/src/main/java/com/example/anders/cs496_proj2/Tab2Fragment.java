@@ -83,11 +83,11 @@ public class Tab2Fragment extends Fragment {
                 alertDialog.show();
             }
         });
-
+        /*
         new Thread() {
             public void run() {
                 try {
-                    /* URL url = new URL("http://ec2-52-79-95-160.ap-northeast-2.compute.amazonaws.com:3000/");
+                    URL url = new URL("http://ec2-52-79-95-160.ap-northeast-2.compute.amazonaws.com:3000/");
                     HttpURLConnection conn = (HttpURLConnection)url.openConnection();
                     conn.setDoOutput(true);
                     conn.setRequestMethod("POST");
@@ -105,7 +105,7 @@ public class Tab2Fragment extends Fragment {
                     while((output = br.readLine()) != null) {
                         Log.d("server", output);
                     }
-                    conn.disconnect(); */
+                    conn.disconnect();
                     URL url = new URL("http://ec2-52-79-95-160.ap-northeast-2.compute.amazonaws.com:3000/");
                     HttpURLConnection conn = (HttpURLConnection)url.openConnection();
                     conn.setRequestMethod("GET");
@@ -128,6 +128,7 @@ public class Tab2Fragment extends Fragment {
                 }
             }
         }.start();
+        */
 
 
         gridView = (GridView) view.findViewById(R.id.gridView);

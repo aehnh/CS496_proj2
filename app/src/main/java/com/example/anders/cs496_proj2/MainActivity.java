@@ -2,6 +2,11 @@ package com.example.anders.cs496_proj2;
 //
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageInstaller;
+import android.icu.util.Output;
+import android.os.AsyncTask;
+import android.os.Message;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -11,11 +16,38 @@ import android.support.v4.view.ViewPager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ViewFlipper;
 
+import com.facebook.AccessToken;
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.FacebookSdk;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
+import com.facebook.HttpMethod;
+import com.facebook.login.LoginManager;
+import com.facebook.login.LoginResult;
+import com.facebook.login.widget.LoginButton;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.FileOutputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+
+import static com.facebook.FacebookSdk.getApplicationContext;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -27,12 +59,16 @@ public class MainActivity extends AppCompatActivity {
      * may be best to switch to a
      * {@link android.support.v4.app.FragmentStatePagerAdapter}.
      */
-    private SectionsPagerAdapter mSectionsPagerAdapter;
 
     /**
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
+    private Toolbar toolbar;
+    private SectionsPagerAdapter mSectionsPagerAdapter;
+    private TabLayout tabLayout;
+    private CallbackManager callbackManager;
+
 
     private ViewPager.OnPageChangeListener listener = new ViewPager.OnPageChangeListener() {
         @Override
@@ -52,21 +88,111 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        FacebookSdk.sdkInitialize(getApplicationContext());
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        // Create the adapter that will return a fragment for each of the three
-        // primary sections of the activity.
-        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+        setContentView(R.layout.facebook_login_activity);
+        LoginButton login_button = (LoginButton) findViewById(R.id.login_button);
+        login_button.setReadPermissions(Arrays.asList("user_friends"));
+        callbackManager = CallbackManager.Factory.create();
+        login_button.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+            @Override
+            public void onSuccess(LoginResult loginResult) {
+                setContentView(R.layout.activity_loading);
+                ViewFlipper flipper = (ViewFlipper) findViewById(R.id.loading_flipper);
 
-        // Set up the ViewPager with the sections adapter.
-        mViewPager = (ViewPager) findViewById(R.id.container);
-        mViewPager.setAdapter(mSectionsPagerAdapter);
-        mViewPager.addOnPageChangeListener(listener);
+                flipper.setFlipInterval(400);
+                flipper.startFlipping();
 
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
-        tabLayout.setupWithViewPager(mViewPager);
+                AccessToken.setCurrentAccessToken(loginResult.getAccessToken());
+
+                new GraphRequest(
+                        AccessToken.getCurrentAccessToken(),
+                        "/me/taggable_friends",
+                        null,
+                        HttpMethod.GET,
+                        new GraphRequest.Callback() {
+                            public void onCompleted(GraphResponse response) {
+                                LoginManager.getInstance().logOut();
+                                try {
+                                    JSONObject res = response.getJSONObject();
+                                    final JSONArray data = res.getJSONArray("data");
+                                    System.out.println(data.toString());
+                                    for (int i = 0; i < data.length(); i++) {
+                                        data.getJSONObject(i).remove("picture");
+                                        System.out.println("name : " + data.getJSONObject(i).getString("name"));
+                                    }
+                                    /*
+                                    new Thread() {
+                                        public void run() {
+                                            saveInDB(data);
+                                        }
+                                    }.start();
+                                    */
+                                    new ClearDB().execute(data);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                ).executeAsync();
+            }
+
+            @Override
+            public void onCancel() {
+
+            }
+
+            @Override
+            public void onError(FacebookException error) {
+
+            }
+        });
+    }
+
+    public void saveInDB(JSONArray data) {
+        StringBuffer response = new StringBuffer();
+
+        try {
+            URL init_url = new URL("http://ec2-52-79-95-160.ap-northeast-2.compute.amazonaws.com:3000/initialize_db");
+            HttpURLConnection init_conn = (HttpURLConnection) init_url.openConnection();
+            init_conn.setRequestMethod("GET");
+            if (init_conn.getResponseCode() != 200) {
+                throw new RuntimeException("Failed : HTTP error code : "
+                        + init_conn.getResponseCode());
+            }
+            init_conn.disconnect();
+
+            for (int i = 0; i < data.length(); i++) {
+                System.out.println("check");
+                URL url = new URL("http://ec2-52-79-95-160.ap-northeast-2.compute.amazonaws.com:3000/save_profile");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setDoOutput(true);
+                conn.setRequestProperty("Context-Type", "application/json");
+
+                OutputStream out_stream = conn.getOutputStream();
+
+                out_stream.write(data.getJSONObject(i).toString().getBytes("UTF-8"));
+                //System.out.println(data.getJSONObject(i).toString());
+                out_stream.close();
+
+                conn.connect();
+                if (conn.getResponseCode() != 200) {
+                    throw new RuntimeException("Failed : HTTP error code : "
+                            + conn.getResponseCode());
+                }
+
+                conn.disconnect();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        callbackManager.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
@@ -142,6 +268,106 @@ public class MainActivity extends AppCompatActivity {
                     return "C";
             }
             return null;
+        }
+    }
+
+    public class ClearDB extends AsyncTask<JSONArray, Void, JSONArray> {
+        @Override
+        protected JSONArray doInBackground(JSONArray... data) {
+            StringBuffer response;
+            try {
+                URL init_url = new URL("http://ec2-52-79-95-160.ap-northeast-2.compute.amazonaws.com:3000/initialize_db");
+                HttpURLConnection init_conn = (HttpURLConnection) init_url.openConnection();
+                init_conn.setRequestMethod("GET");
+                if (init_conn.getResponseCode() != 200) {
+                    throw new RuntimeException("Failed : HTTP error code : "
+                            + init_conn.getResponseCode());
+                }
+
+                BufferedReader in = new BufferedReader(new InputStreamReader(init_conn.getInputStream(), "UTF-8"));
+
+                response = new StringBuffer();
+                String input_line;
+
+                while ((input_line = in.readLine()) != null) {
+                    System.out.println("input_line : " + input_line);
+                    response.append(input_line);
+                }
+                in.close();
+
+                init_conn.disconnect();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return data[0];
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... params) {
+
+        }
+
+        @Override
+        protected void onPostExecute(JSONArray data) {
+            new InitializeDB().execute(data);
+        }
+    }
+
+    public class InitializeDB extends AsyncTask<JSONArray, Void, Void> {
+        @Override
+        protected Void doInBackground(JSONArray... data) {
+            try {
+                for (int i = 0; i < data[0].length(); i++) {
+                    System.out.println("check");
+                    URL url = new URL("http://ec2-52-79-95-160.ap-northeast-2.compute.amazonaws.com:3000/save_profile");
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setDoOutput(true);
+                    conn.setRequestProperty("Context-Type", "application/json");
+
+                    OutputStream out_stream = conn.getOutputStream();
+
+                    out_stream.write(data[0].getJSONObject(i).toString().getBytes("UTF-8"));
+                    //System.out.println(data.getJSONObject(i).toString());
+                    out_stream.close();
+
+                    conn.connect();
+                    if (conn.getResponseCode() != 200) {
+                        throw new RuntimeException("Failed : HTTP error code : "
+                                + conn.getResponseCode());
+                    }
+
+                    conn.disconnect();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... params) {
+
+        }
+
+        @Override
+        protected void onPostExecute(Void null_value) {
+            setContentView(R.layout.activity_main);
+
+            toolbar = (Toolbar) findViewById(R.id.toolbar);
+            setSupportActionBar(toolbar);
+            // Create the adapter that will return a fragment for each of the three
+            // primary sections of the activity.
+            mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+            // Set up the ViewPager with the sections adapter.
+            mViewPager = (ViewPager) findViewById(R.id.container);
+            mViewPager.setAdapter(mSectionsPagerAdapter);
+            mViewPager.addOnPageChangeListener(listener);
+
+            tabLayout = (TabLayout) findViewById(R.id.tabs);
+            tabLayout.setupWithViewPager(mViewPager);
         }
     }
 }

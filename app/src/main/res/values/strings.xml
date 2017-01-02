@@ -2,4 +2,6 @@
     <string name="app_name">CS496_proj2</string>
     <string name="action_settings">Settings</string>
     <string name="section_format">Hello World from section: %1$d</string>
+    <string name="facebook_app_id">566076260253030</string>
+    <string name="logged_in">false</string>
 </resources>
