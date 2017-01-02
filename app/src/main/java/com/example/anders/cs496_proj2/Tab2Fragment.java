@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -13,12 +14,16 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -39,6 +44,7 @@ public class Tab2Fragment extends Fragment {
 
     final public static ArrayList<String> gotten = new ArrayList<String>();
     private static GridView gridView;
+    private static GridViewAdapter gridViewAdapter;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -83,11 +89,12 @@ public class Tab2Fragment extends Fragment {
                 alertDialog.show();
             }
         });
-        /*
+
         new Thread() {
             public void run() {
                 try {
-                    URL url = new URL("http://ec2-52-79-95-160.ap-northeast-2.compute.amazonaws.com:3000/");
+                    // TODO get from server
+                    /* URL url = new URL("http://ec2-52-79-95-160.ap-northeast-2.compute.amazonaws.com:3000/");
                     HttpURLConnection conn = (HttpURLConnection)url.openConnection();
                     conn.setDoOutput(true);
                     conn.setRequestMethod("POST");
@@ -105,7 +112,7 @@ public class Tab2Fragment extends Fragment {
                     while((output = br.readLine()) != null) {
                         Log.d("server", output);
                     }
-                    conn.disconnect();
+                    conn.disconnect(); */
                     URL url = new URL("http://ec2-52-79-95-160.ap-northeast-2.compute.amazonaws.com:3000/");
                     HttpURLConnection conn = (HttpURLConnection)url.openConnection();
                     conn.setRequestMethod("GET");
@@ -128,11 +135,11 @@ public class Tab2Fragment extends Fragment {
                 }
             }
         }.start();
-        */
 
 
         gridView = (GridView) view.findViewById(R.id.gridView);
-        gridView.setAdapter(new GridViewAdapter(getActivity()));
+        gridViewAdapter = new GridViewAdapter(getActivity());
+        gridView.setAdapter(gridViewAdapter);
 
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -148,6 +155,8 @@ public class Tab2Fragment extends Fragment {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 GridViewAdapter.bitmaps.remove(position);
+                // TODO delete from server here
+                gridViewAdapter.notifyDataSetChanged();
                 gridView.invalidateViews();
                 return true;
             }
@@ -160,9 +169,9 @@ public class Tab2Fragment extends Fragment {
 
     private File createImageFile() throws IOException {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String imageFileName = "JPEG_" + timeStamp + "_";
+        String imageFileName = "PNG_" + timeStamp + "_";
         File storageDir = getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        File image = File.createTempFile(imageFileName, ".jpg", storageDir);
+        File image = File.createTempFile(imageFileName, ".png", storageDir);
 
         mCurrentPhotoPath = image.getAbsolutePath();
         return image;
@@ -200,9 +209,41 @@ public class Tab2Fragment extends Fragment {
                     }
                 }
             }
-            GridViewAdapter.bitmaps.add(0, photo);
+            if(photo.getWidth() > 2048) {
+                photo = Bitmap.createScaledBitmap(photo, 2048, photo.getHeight() * 2048 / photo.getWidth(), true);
+            }
+            if(photo.getHeight() > 2048) {
+                photo = Bitmap.createScaledBitmap(photo, photo.getWidth() * 2048 / photo.getHeight(), 2048, true);
+            }
+            //GridViewAdapter.bitmaps.add(0, photo);
+
             // TODO send to server here
+            try {
+                String encoded = getStringFromBitmap(photo);
+                JSONObject jsonified = new JSONObject("{\"image\":\"" + encoded + "\"}");
+                Log.d("stringed", encoded);
+
+                String extracted = jsonified.getString("image");
+                Bitmap decoded = getBitmapFromString(extracted);
+                GridViewAdapter.bitmaps.add(0, decoded);
+            } catch(JSONException e) {
+                e.printStackTrace();
+            }
+
+            gridViewAdapter.notifyDataSetChanged();
             gridView.invalidateViews();
         }
+    }
+
+    private String getStringFromBitmap(Bitmap bitmap) {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+        byte[] b = byteArrayOutputStream.toByteArray();
+        return Base64.encodeToString(b, Base64.DEFAULT);
+    }
+
+    private Bitmap getBitmapFromString(String string) {
+        byte[] b = Base64.decode(string, Base64.DEFAULT);
+        return BitmapFactory.decodeByteArray(b, 0, b.length);
     }
 }
