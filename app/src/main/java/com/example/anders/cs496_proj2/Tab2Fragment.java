@@ -14,12 +14,16 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -89,6 +93,7 @@ public class Tab2Fragment extends Fragment {
         new Thread() {
             public void run() {
                 try {
+                    // TODO get from server
                     /* URL url = new URL("http://ec2-52-79-95-160.ap-northeast-2.compute.amazonaws.com:3000/");
                     HttpURLConnection conn = (HttpURLConnection)url.openConnection();
                     conn.setDoOutput(true);
@@ -164,9 +169,9 @@ public class Tab2Fragment extends Fragment {
 
     private File createImageFile() throws IOException {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String imageFileName = "JPEG_" + timeStamp + "_";
+        String imageFileName = "PNG_" + timeStamp + "_";
         File storageDir = getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        File image = File.createTempFile(imageFileName, ".jpg", storageDir);
+        File image = File.createTempFile(imageFileName, ".png", storageDir);
 
         mCurrentPhotoPath = image.getAbsolutePath();
         return image;
@@ -210,10 +215,35 @@ public class Tab2Fragment extends Fragment {
             if(photo.getHeight() > 2048) {
                 photo = Bitmap.createScaledBitmap(photo, photo.getWidth() * 2048 / photo.getHeight(), 2048, true);
             }
-            GridViewAdapter.bitmaps.add(0, photo);
+            //GridViewAdapter.bitmaps.add(0, photo);
+
             // TODO send to server here
+            try {
+                String encoded = getStringFromBitmap(photo);
+                JSONObject jsonified = new JSONObject("{\"image\":\"" + encoded + "\"}");
+                Log.d("stringed", encoded);
+
+                String extracted = jsonified.getString("image");
+                Bitmap decoded = getBitmapFromString(extracted);
+                GridViewAdapter.bitmaps.add(0, decoded);
+            } catch(JSONException e) {
+                e.printStackTrace();
+            }
+
             gridViewAdapter.notifyDataSetChanged();
             gridView.invalidateViews();
         }
+    }
+
+    private String getStringFromBitmap(Bitmap bitmap) {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+        byte[] b = byteArrayOutputStream.toByteArray();
+        return Base64.encodeToString(b, Base64.DEFAULT);
+    }
+
+    private Bitmap getBitmapFromString(String string) {
+        byte[] b = Base64.decode(string, Base64.DEFAULT);
+        return BitmapFactory.decodeByteArray(b, 0, b.length);
     }
 }
