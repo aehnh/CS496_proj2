@@ -34,10 +34,6 @@ import com.facebook.FacebookSdk;
 
 import static com.facebook.FacebookSdk.getApplicationContext;
 
-/**
- * Created by q on 2016-12-30.
- */
-
 public class Tab1Fragment extends Fragment {
     View view;
     private JSONArray contact_list;

@@ -9,6 +9,7 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -23,7 +24,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
+import android.widget.Toast;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -41,6 +44,7 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.concurrent.ExecutionException;
 
 public class Tab2Fragment extends Fragment {
 
@@ -52,6 +56,13 @@ public class Tab2Fragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.tab2fragment, container, false);
+
+        // TODO getPhotos (save to bitmaps)
+        try {
+            new getPhotos().execute().get();
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
 
         FloatingActionButton fab = (FloatingActionButton)view.findViewById(R.id.fab);
         final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
@@ -84,6 +95,11 @@ public class Tab2Fragment extends Fragment {
                 startActivityForResult(Intent.createChooser(intent, "Select File"), 2);
             }
         });
+
+        gridView = (GridView) view.findViewById(R.id.gridView);
+        gridViewAdapter = new GridViewAdapter(getActivity());
+        gridView.setAdapter(gridViewAdapter);
+
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -92,62 +108,10 @@ public class Tab2Fragment extends Fragment {
             }
         });
 
-        new Thread() {
-            public void run() {
-                try {
-                    // TODO get from server
-                    /* URL url = new URL("http://ec2-52-79-95-160.ap-northeast-2.compute.amazonaws.com:3000/");
-                    HttpURLConnection conn = (HttpURLConnection)url.openConnection();
-                    conn.setDoOutput(true);
-                    conn.setRequestMethod("POST");
-                    conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-
-                    OutputStream os = conn.getOutputStream();
-                    String input = "eeeeeeeeeeeeeeeeeaaaaaaaaa";
-                    os.write(input.getBytes());
-                    os.flush();
-                    os.close();
-
-                    BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                    String output;
-                    Log.d("server", "Output from Server .... \n");
-                    while((output = br.readLine()) != null) {
-                        Log.d("server", output);
-                    }
-                    conn.disconnect(); */
-                    URL url = new URL("http://ec2-52-79-95-160.ap-northeast-2.compute.amazonaws.com:3000/");
-                    HttpURLConnection conn = (HttpURLConnection)url.openConnection();
-                    conn.setRequestMethod("GET");
-                    //conn.setRequestProperty("Accept", "application/x-www-form-urlencoded");
-
-                    int responseCode = conn.getResponseCode();
-
-                    BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                    String output;
-                    Log.d("server", "Output from Server .... \n");
-                    while((output = br.readLine()) != null) {
-                        Log.d("server", output);
-                    }
-                    gotten.add(output);
-                    conn.disconnect();
-                } catch(MalformedURLException e) {
-                    e.printStackTrace();
-                } catch(IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }.start();
-
-
-        gridView = (GridView) view.findViewById(R.id.gridView);
-        gridViewAdapter = new GridViewAdapter(getActivity());
-        gridView.setAdapter(gridViewAdapter);
-
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent i = new Intent(getActivity().getApplicationContext(), ImageSliderActivity.class);
-
                 i.putExtra("id", position);
                 startActivity(i);
             }
@@ -156,8 +120,9 @@ public class Tab2Fragment extends Fragment {
         gridView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                // TODO removePhoto
+                new removePhoto().execute(GridViewAdapter.bitmaps.get(position).getId());
                 GridViewAdapter.bitmaps.remove(position);
-                // TODO delete from server here
                 gridViewAdapter.notifyDataSetChanged();
                 gridView.invalidateViews();
                 return true;
@@ -245,25 +210,13 @@ public class Tab2Fragment extends Fragment {
                 photo = Bitmap.createScaledBitmap(photo, photo.getWidth() * 2048 / photo.getHeight(), 2048, true);
             }
 
-
-            //GridViewAdapter.bitmaps.add(0, photo);
-
-            // TODO send to server here
-            try {
-                String encoded = getStringFromBitmap(photo);
-                JSONObject jsonified = new JSONObject(/*"{\"image\":\"" + encoded + "\"}"*/);
-                jsonified.put("image", encoded);
-                Log.d("stringed", encoded);
-
-                String extracted = jsonified.getString("image");
-                Bitmap decoded = getBitmapFromString(extracted);
-                GridViewAdapter.bitmaps.add(0, decoded);
-            } catch(JSONException e) {
-                e.printStackTrace();
-            }
-
+            // TODO addPhoto
+            PackedImage packedPhoto = new PackedImage(GridViewAdapter.nextId, photo);
+            new addPhoto().execute(packedPhoto);
+            GridViewAdapter.bitmaps.add(0, packedPhoto);
+            GridViewAdapter.nextId++;
             gridViewAdapter.notifyDataSetChanged();
-            gridView.invalidateViews();
+
         }
     }
 
@@ -283,5 +236,126 @@ public class Tab2Fragment extends Fragment {
         matrix.postRotate(angle);
         return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
                 matrix, true);
+    }
+
+    public class getPhotos extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                URL url = new URL("http://ec2-52-79-95-160.ap-northeast-2.compute.amazonaws.com:3000/get_photos");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                if (conn.getResponseCode() != 200) {
+                    throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
+                }
+
+                BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+                StringBuffer response = new StringBuffer();
+                String input;
+                while((input = br.readLine()) != null) {
+                    response.append(input);
+                }
+                br.close();
+                JSONArray jsonMainNode = new JSONArray(response.toString());
+                for(int i = 0; i < jsonMainNode.length(); i++) {
+                    JSONObject jsonChildNode = jsonMainNode.getJSONObject(i);
+                    Integer id = Integer.parseInt(jsonChildNode.getString("id"));
+                    String extracted = jsonChildNode.getString("image");
+                    Bitmap decoded = getBitmapFromString(extracted);
+                    GridViewAdapter.bitmaps.add(0, new PackedImage(id, decoded));
+                    if(GridViewAdapter.nextId < id) {
+                        GridViewAdapter.nextId = id;
+                    }
+                    Log.d("fuuuuuuuuuuck", id.toString());
+                }
+                GridViewAdapter.nextId++;
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... progress) {
+
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            gridViewAdapter.notifyDataSetChanged();
+            gridView.invalidateViews();
+        }
+    }
+
+    public class addPhoto extends AsyncTask<PackedImage, Void, Void> {
+
+        @Override
+        protected Void doInBackground(PackedImage... params) {
+            try {
+                URL url = new URL("http://ec2-52-79-95-160.ap-northeast-2.compute.amazonaws.com:3000/add_photo");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setDoOutput(true);
+                conn.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+
+                OutputStream os = conn.getOutputStream();
+                String stringified = getStringFromBitmap(params[0].getBitmap());
+                JSONObject jsonified = new JSONObject();
+                jsonified.put("id", params[0].getId());
+                jsonified.put("image", stringified);
+                String output = jsonified.toString();
+                os.write(output.getBytes());
+                os.flush();
+                os.close();
+                conn.connect();
+                if (conn.getResponseCode() != 200) {
+                    throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
+                }
+                conn.disconnect();
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... progress) {
+
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            gridView.invalidateViews();
+        }
+    }
+
+    public class removePhoto extends AsyncTask<Integer, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Integer... params) {
+            try {
+                URL url = new URL("http://ec2-52-79-95-160.ap-northeast-2.compute.amazonaws.com:3000/remove_photo/?id=" + Integer.toString(params[0]));
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                if (conn.getResponseCode() != 200) {
+                    throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
+                }
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... progress) {
+
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+
+        }
     }
 }
