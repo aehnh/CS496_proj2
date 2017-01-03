@@ -43,6 +43,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
@@ -263,11 +265,11 @@ public class Tab2Fragment extends Fragment {
                     Integer id = Integer.parseInt(jsonChildNode.getString("id"));
                     String extracted = jsonChildNode.getString("image");
                     Bitmap decoded = getBitmapFromString(extracted);
-                    GridViewAdapter.bitmaps.add(0, new PackedImage(id, decoded));
+                    GridViewAdapter.bitmaps.add(new PackedImage(id, decoded));
                     if(GridViewAdapter.nextId < id) {
                         GridViewAdapter.nextId = id;
                     }
-                    Log.d("fuuuuuuuuuuck", id.toString());
+                    Collections.sort(GridViewAdapter.bitmaps, new CustomComparator());
                 }
                 GridViewAdapter.nextId++;
             } catch(Exception e) {
@@ -356,6 +358,13 @@ public class Tab2Fragment extends Fragment {
         @Override
         protected void onPostExecute(Void result) {
 
+        }
+    }
+
+    private class CustomComparator implements Comparator<PackedImage> {
+        @Override
+        public int compare(PackedImage o1, PackedImage o2) {
+            return o2.getId().compareTo(o1.getId());
         }
     }
 }
