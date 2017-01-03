@@ -25,16 +25,16 @@ public class PostViewActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.postview);
 
+        Intent i = getIntent();
+
+
         TextView title = (TextView) findViewById(R.id.post_view_title);
         TextView question = (TextView) findViewById(R.id.post_view_question);
 
-        //TODO : set title and question by the accessed post
-        String str = "";
-        for (int i = 0; i < 100; i++) {
-            str += "Long text\n";
-        }
-        title.setText("set title here");
-        question.setText(str);
+        Post post = (Post) i.getExtras().getSerializable("post");
+
+        title.setText(post.getTitle());
+        question.setText(post.getQuestion());
 
         Button submit = (Button) findViewById(R.id.comment_submit);
         EditText comment = (EditText) findViewById(R.id.new_comment);

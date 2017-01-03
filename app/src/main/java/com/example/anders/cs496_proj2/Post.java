@@ -2,16 +2,16 @@ package com.example.anders.cs496_proj2;
 
 import android.graphics.Bitmap;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
  * Created by Anders on 1/3/2017.
  */
 
-public class Post {
+public class Post implements Serializable {
     String title;
     String question;
-    Bitmap image;
     ArrayList<Comment> comments;
 
     public Post(String title, String question) {

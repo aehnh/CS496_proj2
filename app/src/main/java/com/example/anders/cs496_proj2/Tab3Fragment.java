@@ -77,7 +77,7 @@ public class Tab3Fragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent i = new Intent(getActivity().getApplicationContext(), PostViewActivity.class);
-                i.putExtra("position", position);
+                i.putExtra("post", posts.get(position));
                 startActivity(i);
             }
         });
@@ -104,7 +104,6 @@ public class Tab3Fragment extends Fragment {
             case PostCreateActivity.FINISH_BY_CANCEL :
                 break;
             case PostCreateActivity.FINISH_BY_SUBMIT:
-                //TODO : save the submitted form in DB and refresh the list adapter
                 new SaveNewPost().execute(data.getExtras().getString("title"), data.getExtras().getString("question"));
                 break;
         }
@@ -154,16 +153,13 @@ public class Tab3Fragment extends Fragment {
                 JSONArray jarray = new JSONArray(param);
                 for (int i = 0; i < jarray.length(); i++) {
                     JSONObject jobject = jarray.getJSONObject(i);
-                    JSONObject comments_jobject = jobject.getJSONObject("comments");
+                    JSONArray comments_jarray = jobject.getJSONArray("comments");
                     ArrayList<Comment> comments = new ArrayList<>();
                     Post post;
-                    if (comments_jobject.length() != 0) {
-                        Iterator<String> keys = comments_jobject.keys();
-                        String key = "";
-                        while (keys.hasNext()) {
-                            key = keys.next();
-                            Comment comment = new Comment(comments_jobject.getJSONObject(key).getString("comment_title"),
-                                    comments_jobject.getJSONObject(key).getString("comment_content"));
+                    if (comments_jarray.length() != 0) {
+                        for (int j = 0; j < comments_jarray.length(); j++) {
+                            Comment comment = new Comment(comments_jarray.getJSONObject(j).getString("comment_title"),
+                                    comments_jarray.getJSONObject(j).getString("comment_content"));
                             comments.add(comment);
                         }
 
@@ -233,17 +229,14 @@ public class Tab3Fragment extends Fragment {
             try {
                 String title = param.getString("title");
                 String question = param.getString("question");
-                String images;
-                if (param.getString("image").compareTo("") != 0)
-                    images = param.getString("image");
                 JSONArray comments = param.getJSONArray("comments");
 
                 ArrayList<Comment> cmts = new ArrayList<>();
                 for (int i = 0; i < comments.length(); i++) {
                     Comment comment = new Comment(comments.getJSONObject(i).getString("comment_title"),
                             comments.getJSONObject(i).getString("comment_content"));
+                    cmts.add(comment);
                 }
-                //TODO : add image when initialize
 
                 Post new_post = new Post(title, question, cmts);
                 posts.add(new_post);
