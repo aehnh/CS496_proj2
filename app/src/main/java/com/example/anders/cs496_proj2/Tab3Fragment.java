@@ -169,17 +169,20 @@ public class Tab3Fragment extends Fragment {
         protected void onPostExecute(String param) {
             swipeRefreshLayout.setRefreshing(false);
             posts = new ArrayList<>();
+            int max_id = -1;
             try {
                 JSONArray jarray = new JSONArray(param);
                 for (int i = 0; i < jarray.length(); i++) {
                     JSONObject jobject = jarray.getJSONObject(i);
                     Post post = new Post(Integer.parseInt(jobject.getString("id")), jobject.getString("title"), jobject.getString("question"), jobject.getJSONArray("comments"));
                     posts.add(post);
+                    if (max_id < Integer.parseInt(jobject.getString("id")))
+                        max_id = Integer.parseInt(jobject.getString("id"));
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
+            id++;
             adapter = new CustomAdapter(getActivity(), android.R.layout.simple_list_item_2, posts);
             listView.setAdapter(adapter);
         }

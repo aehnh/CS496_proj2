@@ -11,7 +11,7 @@ import java.util.ArrayList;
  * Created by Anders on 1/3/2017.
  */
 
-public class Post implements Serializable {
+public class Post {
     int id;
     String title;
     String question;

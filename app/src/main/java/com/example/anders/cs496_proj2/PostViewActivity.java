@@ -80,8 +80,9 @@ public class PostViewActivity extends AppCompatActivity {
         @Override
         public Object getItem(int position) {
             JSONObject jobject = null;
+            int len = getCount();
             try {
-                jobject = post.getComments().getJSONObject(position);
+                jobject = post.getComments().getJSONObject(len - 1 - position);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -90,7 +91,7 @@ public class PostViewActivity extends AppCompatActivity {
 
         @Override
         public long getItemId(int position) {
-            return position;
+            return post.getId();
         }
 
         @Override
@@ -98,10 +99,11 @@ public class PostViewActivity extends AppCompatActivity {
             if (convertView == null) {
                 LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 convertView = inflater.inflate(R.layout.comment, parent, false);
+                System.out.println("convert view : " + (convertView == null));
             }
 
-            TextView comment_title = (TextView) findViewById(R.id.comment_title);
-            TextView comment_content = (TextView) findViewById(R.id.comment_content);
+            TextView comment_title = (TextView) convertView.findViewById(R.id.comment_title);
+            TextView comment_content = (TextView) convertView.findViewById(R.id.comment_content);
 
             //comment_title.setText(((Comment)getItem(position)).getCommentTitle());
             comment_title.setText("Anonymous");
@@ -121,7 +123,7 @@ public class PostViewActivity extends AppCompatActivity {
 
         @Override
         protected JSONObject doInBackground(JSONObject... params) {
-            JSONObject new_post = null;
+            JSONObject new_comment = null;
             try {
                 URL url = new URL("http://ec2-52-79-95-160.ap-northeast-2.compute.amazonaws.com:3000/post_comment");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -129,20 +131,18 @@ public class PostViewActivity extends AppCompatActivity {
                 conn.setDoOutput(true);
                 conn.setRequestProperty("Content-Type", "application/json; charset=utf-8");
 
-                new_post = new JSONObject();
-                new_post.put("id", Integer.toString(post.getId()));
-                new_post.put("title", post.getTitle());
-                new_post.put("question", post.getQuestion());
-                new_post.put("image", "");
                 JSONArray comments = post.getComments();
                 comments.put(params[0]);
-                new_post.put("comments", comments);
+
+                new_comment = new JSONObject();
+                new_comment.put("comments", comments);
+                new_comment.put("id", Integer.toString(post.getId()));
 
                 OutputStream out_stream = conn.getOutputStream();
 
-                System.out.println("new post : " + new_post.toString());
+                System.out.println("new post : " + new_comment.toString());
 
-                out_stream.write(new_post.toString().getBytes("UTF-8"));
+                out_stream.write(new_comment.toString().getBytes("UTF-8"));
                 out_stream.close();
 
                 conn.connect();
@@ -156,7 +156,7 @@ public class PostViewActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
-            return new_post;
+            return new_comment;
         }
 
         @Override

@@ -22,7 +22,10 @@ public class CustomAdapter extends ArrayAdapter<Post> {
     }
 
     @Override
-    public Post getItem(int position) { return posts.get(position); }
+    public Post getItem(int position) {
+        int len = posts.size();
+        return posts.get(len - 1 - position);
+    }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
