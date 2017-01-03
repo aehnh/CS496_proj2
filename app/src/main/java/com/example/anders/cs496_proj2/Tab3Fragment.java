@@ -5,6 +5,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -43,11 +44,28 @@ public class Tab3Fragment extends Fragment {
     private ListView listView;
     private CustomAdapter adapter;
     private FloatingActionButton fab;
+    private SwipeRefreshLayout swipeRefreshLayout;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
         view = inflater.inflate(R.layout.tab3, container, false);
         id = 0;
+
+        swipeRefreshLayout = (SwipeRefreshLayout)view.findViewById(R.id.swiperefresh);
+
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                new LoadPosts().execute();
+            }
+        });
+
+        swipeRefreshLayout.setColorSchemeResources(android.R.color.holo_blue_dark,
+                android.R.color.holo_green_light,
+                android.R.color.holo_orange_light,
+                android.R.color.holo_red_light);
+
         /*
         String json = "";
         try {
@@ -149,6 +167,7 @@ public class Tab3Fragment extends Fragment {
 
         @Override
         protected void onPostExecute(String param) {
+            swipeRefreshLayout.setRefreshing(false);
             posts = new ArrayList<>();
             try {
                 JSONArray jarray = new JSONArray(param);
@@ -229,6 +248,4 @@ public class Tab3Fragment extends Fragment {
             adapter.notifyDataSetChanged();
         }
     }
-
-    public Post getPost(int position) { return posts.get(position); }
 }
