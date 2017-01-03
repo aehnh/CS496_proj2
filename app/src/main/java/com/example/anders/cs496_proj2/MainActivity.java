@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInstaller;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.icu.util.Output;
 import android.os.AsyncTask;
 import android.os.Message;
@@ -16,6 +18,7 @@ import android.support.v4.view.ViewPager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -38,6 +41,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
@@ -115,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
                         public void onCompleted(GraphResponse response) {
                             LoginManager.getInstance().logOut();
                             try {
-                                System.out.println(response.toString());
+                                //System.out.println(response.toString());
                                 JSONObject res = response.getJSONObject();
                                 final JSONArray data = res.getJSONArray("data");
                                 new AfterGetFriendsList().execute(data);
@@ -154,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
             init_conn.disconnect();
 
             for (int i = 0; i < data.length(); i++) {
-                System.out.println("check");
+                //System.out.println("check");
                 URL url = new URL("http://ec2-52-79-95-160.ap-northeast-2.compute.amazonaws.com:3000/save_profile");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
@@ -268,7 +272,16 @@ public class MainActivity extends AppCompatActivity {
             System.out.println(data.toString());
             for (int i = 0; i < data[0].length(); i++) {
                 try {
-                    //TODO : send http request by picture url to get profile photo, and convert it to Bitmap, then save it into the DB.
+                    String thumbnail_url_str = data[0].getJSONObject(i).getJSONObject("picture").getJSONObject("data").getString("url");
+                    thumbnail_url_str.replace("\\/", "/");
+                    //System.out.println(thumbnail_url_str);
+
+                    URL thumbnail_url = new URL(thumbnail_url_str);
+                    Bitmap thumbnail_bitmap = BitmapFactory.decodeStream(thumbnail_url.openConnection().getInputStream());
+
+                    data[0].getJSONObject(i).put("thumbnail", getStringFromBitmap(thumbnail_bitmap));
+                    System.out.println(getStringFromBitmap(thumbnail_bitmap));
+
                     data[0].getJSONObject(i).remove("picture");
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -335,7 +348,7 @@ public class MainActivity extends AppCompatActivity {
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                     conn.setRequestMethod("POST");
                     conn.setDoOutput(true);
-                    conn.setRequestProperty("Context-Type", "application/json");
+                    conn.setRequestProperty("Content-Type", "application/json; charset=utf-8");
 
                     OutputStream out_stream = conn.getOutputStream();
 
@@ -378,5 +391,17 @@ public class MainActivity extends AppCompatActivity {
             tabLayout = (TabLayout) findViewById(R.id.tabs);
             tabLayout.setupWithViewPager(mViewPager);
         }
+    }
+
+    public String getStringFromBitmap(Bitmap bitmap) {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+        byte[] b = byteArrayOutputStream.toByteArray();
+        return Base64.encodeToString(b, Base64.DEFAULT);
+    }
+
+    public Bitmap getBitmapFromString(String string) {
+        byte[] b = Base64.decode(string, Base64.DEFAULT);
+        return BitmapFactory.decodeByteArray(b, 0, b.length);
     }
 }

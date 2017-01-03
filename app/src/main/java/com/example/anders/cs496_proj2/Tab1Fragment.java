@@ -79,9 +79,13 @@ public class Tab1Fragment extends Fragment {
                     try {
                         JSONObject item = contact_list.getJSONObject(position);
                         args.putString("name", item.getString("name"));
-                        if (item.getString("from").compareTo("contact") == 0)
+                        if (item.getString("from").compareTo("contact") == 0) {
                             args.putString("number", item.getString("number"));
+                        } else {
+                            args.putString("thumbnail", item.getString("thumbnail"));
+                        }
                         args.putString("from", item.getString("from"));
+
                         dialog_fragment.setArguments(args);
                         dialog_fragment.show(getActivity().getSupportFragmentManager(), "name and phone number");
                     } catch (JSONException e) {
