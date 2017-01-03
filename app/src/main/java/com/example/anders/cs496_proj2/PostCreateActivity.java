@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 public class PostCreateActivity extends AppCompatActivity {
     static final int FINISH_BY_CANCEL = 100;
@@ -34,11 +35,15 @@ public class PostCreateActivity extends AppCompatActivity {
         submit.setOnClickListener(new AdapterView.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent i = new Intent();
-                i.putExtra("title", title.getText().toString());
-                i.putExtra("question", question.getText().toString());
-                setResult(FINISH_BY_SUBMIT, i);
-                finish();
+                if(title.getText().toString().length() > 50) {
+                    Toast.makeText(PostCreateActivity.this, "Word limit exceeded: " + Integer.toString(title.getText().toString().length()) + " / 50 characters", Toast.LENGTH_LONG).show();
+                } else {
+                    Intent i = new Intent();
+                    i.putExtra("title", title.getText().toString());
+                    i.putExtra("question", question.getText().toString());
+                    setResult(FINISH_BY_SUBMIT, i);
+                    finish();
+                }
             }
         });
     }

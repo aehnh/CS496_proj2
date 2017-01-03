@@ -140,6 +140,9 @@ public class Tab1Fragment extends Fragment {
     }
 
     private void appendPhoneContacts(JSONArray jarray, String from) {
+        if(jarray == null) {
+            Toast.makeText(getActivity(), "Unable to connect to server", Toast.LENGTH_LONG);
+        }
         for (int i = 0; i < jarray.length(); i++) {
             try {
                 jarray.getJSONObject(i).put("from",  from);

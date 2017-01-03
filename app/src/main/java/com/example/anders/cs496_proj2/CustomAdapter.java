@@ -36,7 +36,11 @@ public class CustomAdapter extends ArrayAdapter<Post> {
         TextView textView1 = (TextView)convertView.findViewById(android.R.id.text1);
         TextView textView2 = (TextView)convertView.findViewById(android.R.id.text2);
         textView1.setText(post.getTitle());
-        textView2.setText(post.getQuestion());
+        if(post.getQuestion().length() > 100) {
+            textView2.setText(post.getQuestion().substring(0, 99) + " ...");
+        } else {
+            textView2.setText(post.getQuestion());
+        }
 
         return convertView;
     }
