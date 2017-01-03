@@ -63,6 +63,7 @@ public class PostViewActivity extends AppCompatActivity {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+                comment.setText("");
             }
         });
 
