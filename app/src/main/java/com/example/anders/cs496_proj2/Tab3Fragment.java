@@ -5,6 +5,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,7 +35,7 @@ import java.util.Map;
  * Created by q on 2016-12-30.
  */
 
-public class Tab3Fragment extends Fragment {
+public class Tab3Fragment extends Fragment  {
     static final int NEW_POST_REQUEST = 99;
 
     ArrayList<Post> posts;
@@ -42,11 +43,27 @@ public class Tab3Fragment extends Fragment {
     ListView listView;
     CustomAdapter adapter;
     FloatingActionButton fab;
+    SwipeRefreshLayout swipeRefreshLayout;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         view = inflater.inflate(R.layout.tab3, container, false);
+
+        swipeRefreshLayout = (SwipeRefreshLayout)view.findViewById(R.id.swiperefresh);
+
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                new LoadPosts().execute();
+            }
+        });
+
+        swipeRefreshLayout.setColorSchemeResources(android.R.color.holo_blue_dark,
+                android.R.color.holo_green_light,
+                android.R.color.holo_orange_light,
+                android.R.color.holo_red_light);
+
         /*
         String json = "";
         try {
@@ -148,6 +165,7 @@ public class Tab3Fragment extends Fragment {
 
         @Override
         protected void onPostExecute(String param) {
+            swipeRefreshLayout.setRefreshing(false);
             posts = new ArrayList<>();
             try {
                 JSONArray jarray = new JSONArray(param);
