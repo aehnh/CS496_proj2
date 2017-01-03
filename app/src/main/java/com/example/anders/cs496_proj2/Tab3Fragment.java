@@ -35,6 +35,8 @@ import java.util.Map;
  */
 
 public class Tab3Fragment extends Fragment {
+    static final int NEW_POST_REQUEST = 99;
+
     ArrayList<Post> posts;
     View view;
     ListView listView;
@@ -85,7 +87,7 @@ public class Tab3Fragment extends Fragment {
             @Override
             public void onClick(View v) {
                 Intent i = new Intent(getActivity().getApplicationContext(), PostCreateActivity.class);
-                startActivity(i);
+                startActivityForResult(i, NEW_POST_REQUEST);
             }
         });
 

@@ -12,22 +12,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CustomAdapter extends ArrayAdapter<Post> {
+    private ArrayList<Post> posts;
+    Context context;
 
-    public CustomAdapter(Context context, int resource, ArrayList<Post> items) {
-        super(context, resource, items);
+    public CustomAdapter(Context context, int resource, ArrayList<Post> posts) {
+        super(context, resource, posts);
+        this.context = context;
+        this.posts = posts;
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public Post getItem(int position) { return posts.get(position); }
 
-        View v = convertView;
-/*
-        if(v == null) {
-            LayoutInflater vi;
-            vi = LayoutInflater.from(getContext());
-            v = vi.inflate(android.R.layout.simple_list_item_2, null);
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        if (convertView == null) {
+            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            convertView = inflater.inflate(android.R.layout.simple_list_item_2, parent, false);
         }
-*/
+
         Post post = getItem(position);
 
         TextView textView1 = (TextView)convertView.findViewById(android.R.id.text1);
@@ -35,6 +38,6 @@ public class CustomAdapter extends ArrayAdapter<Post> {
         textView1.setText(post.getTitle());
         textView2.setText(post.getQuestion());
 
-        return v;
+        return convertView;
     }
 }
