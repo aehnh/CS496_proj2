@@ -13,18 +13,20 @@
             android:text="Profile"
             android:gravity="center_horizontal"
             android:layout_marginTop="20dp"
-            android:textSize="20sp"/>
+            android:layout_marginBottom="15dp"
+            android:textSize="20sp" />
         <ImageView
             android:id="@+id/profile_image"
             android:layout_width="wrap_content"
             android:layout_height="100dp"
-            android:layout_gravity="center"/>
+            android:layout_gravity="center"
+            android:layout_marginBottom="10dp"/>
         <LinearLayout
-            android:layout_marginBottom="10dp"
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="8dp">
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="15dp">
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -52,7 +54,7 @@
             android:id="@+id/tab1_phone_num"
             android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
             android:clickable="true"
             android:background="@drawable/tab1_dialog_color_selector">

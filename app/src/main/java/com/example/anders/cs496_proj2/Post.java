@@ -1,5 +1,7 @@
 package com.example.anders.cs496_proj2;
 
+import android.graphics.Bitmap;
+
 import java.util.ArrayList;
 
 /**
@@ -7,29 +9,32 @@ import java.util.ArrayList;
  */
 
 public class Post {
+    String title;
     String question;
-    String description;
-    ArrayList<String> comments;
+    Bitmap image;
+    ArrayList<Comment> comments;
 
-    public Post(String question, String description, ArrayList<String> comments) {
+    public Post(String title, String question) {
+        this.title = title;
         this.question = question;
-        this.description = description;
+        comments = null;
+    }
+
+    public Post(String title, String question, ArrayList<Comment> comments) {
+        this.title = title;
+        this.question = question;
         this.comments = comments;
     }
 
-    public String getQuestion() {
-        return question;
-    }
+    public String getTitle() { return title; }
 
-    public String getDescription() {
-        return description;
-    }
+    public void setTitle(String title) { this.title = title; }
 
-    public ArrayList<String> getComments() {
-        return comments;
-    }
+    public String getQuestion() { return question; }
 
-    public void addComment(String comment) {
-        comments.add(comment);
-    }
+    public void setQuestion(String question) { this.question = question; }
+
+    public ArrayList<Comment> getComments() { return comments; }
+
+    public void setComments(ArrayList<Comment> comemnts) { this.comments = comments; }
 }

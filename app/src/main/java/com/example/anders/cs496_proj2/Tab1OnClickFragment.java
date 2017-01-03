@@ -3,6 +3,7 @@ package com.example.anders.cs496_proj2;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.net.Uri;
 import android.support.v4.app.DialogFragment;
 import android.os.Bundle;
@@ -19,6 +20,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.anders.cs496_proj2.R;
+
+import static com.facebook.FacebookSdk.getApplicationContext;
 
 /**
  * Created by q on 2016-12-26.
@@ -41,7 +44,14 @@ public class Tab1OnClickFragment extends DialogFragment {
             thumbnail.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.cat1));
         } else {
             number.setText("From Facebook");
-            thumbnail.setImageBitmap(getBitmapFromString(params.getString("thumbnail")));
+            Bitmap thumbnail_bitmap = getBitmapFromString(params.getString("thumbnail"));
+            int bounding = Math.round((float)getApplicationContext().getResources().getDisplayMetrics().density * 100);
+            float scale = (float)bounding / thumbnail_bitmap.getWidth();
+            Matrix matrix  = new Matrix();
+            matrix.postScale(scale, scale);
+            Bitmap scaled_Bitmap = Bitmap.createBitmap(thumbnail_bitmap, 0, 0, thumbnail_bitmap.getWidth(), thumbnail_bitmap.getHeight(), matrix, true);
+
+            thumbnail.setImageBitmap(scaled_Bitmap);
         }
 
         LinearLayout phone_num = (LinearLayout) view.findViewById(R.id.tab1_phone_num);

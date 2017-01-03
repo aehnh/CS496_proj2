@@ -47,6 +47,7 @@
         </provider>
 
         <activity android:name=".PostCreateActivity"></activity>
+        <activity android:name=".PostViewActivity"></activity>
     </application>
 
 </manifest>

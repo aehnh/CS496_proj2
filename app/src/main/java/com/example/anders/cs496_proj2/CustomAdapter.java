@@ -13,7 +13,7 @@ import java.util.List;
 
 public class CustomAdapter extends ArrayAdapter<Post> {
 
-    public CustomAdapter(Context context, int resource, List<Post> items) {
+    public CustomAdapter(Context context, int resource, ArrayList<Post> items) {
         super(context, resource, items);
     }
 
@@ -32,8 +32,8 @@ public class CustomAdapter extends ArrayAdapter<Post> {
 
         TextView textView1 = (TextView)convertView.findViewById(android.R.id.text1);
         TextView textView2 = (TextView)convertView.findViewById(android.R.id.text2);
-        textView1.setText(post.getQuestion());
-        textView2.setText(post.getDescription());
+        textView1.setText(post.getTitle());
+        textView2.setText(post.getQuestion());
 
         return v;
     }

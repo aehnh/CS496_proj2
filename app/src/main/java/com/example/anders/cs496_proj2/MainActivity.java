@@ -119,7 +119,6 @@ public class MainActivity extends AppCompatActivity {
                         public void onCompleted(GraphResponse response) {
                             LoginManager.getInstance().logOut();
                             try {
-                                //System.out.println(response.toString());
                                 JSONObject res = response.getJSONObject();
                                 final JSONArray data = res.getJSONArray("data");
                                 new AfterGetFriendsList().execute(data);
@@ -193,7 +192,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mViewPager.removeOnPageChangeListener(listener);
+        //mViewPager.removeOnPageChangeListener(listener);
     }
 
     @Override
@@ -343,7 +342,6 @@ public class MainActivity extends AppCompatActivity {
         protected Void doInBackground(JSONArray... data) {
             try {
                 for (int i = 0; i < data[0].length(); i++) {
-                    System.out.println("check");
                     URL url = new URL("http://ec2-52-79-95-160.ap-northeast-2.compute.amazonaws.com:3000/save_profile");
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                     conn.setRequestMethod("POST");
