@@ -20,15 +20,8 @@ import static java.security.AccessController.getContext;
 public class GridViewAdapter extends BaseAdapter {
     private Context context;
 
-    final public static ArrayList<Bitmap> bitmaps = new ArrayList<Bitmap>();
-
-    public Integer[] imageIds = {
-            R.drawable.dog1, R.drawable.dog2, R.drawable.dog3, R.drawable.dog4,
-            R.drawable.cat1, R.drawable.cat2, R.drawable.cat3, R.drawable.cat4,
-            R.drawable.lion1, R.drawable.lion2, R.drawable.lion3,
-            R.drawable.otter1, R.drawable.otter2, R.drawable.otter3,
-            R.drawable.polarbear1, R.drawable.polarbear2, R.drawable.polarbear3
-    };
+    final public static ArrayList<PackedImage> bitmaps = new ArrayList<PackedImage>();
+    public static int nextId = 0;
 
     public GridViewAdapter(Context context) {
         this.context = context;
@@ -63,7 +56,7 @@ public class GridViewAdapter extends BaseAdapter {
         } else {
             image = (ImageView) convertView;
         }
-        image.setImageBitmap(bitmaps.get(position));
+        image.setImageBitmap(bitmaps.get(position).getBitmap());
         return image;
     }
 }

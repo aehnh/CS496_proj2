@@ -29,7 +29,7 @@ public class ImageSliderActivity extends AppCompatActivity {
 
         for (int j = 0; j < gridViewAdapter.getCount(); j++) {
             ImageView imageView = new ImageView(this);
-            imageView.setImageBitmap(gridViewAdapter.bitmaps.get(j));
+            imageView.setImageBitmap(gridViewAdapter.bitmaps.get(j).getBitmap());
             images.add(imageView);
         }
 
