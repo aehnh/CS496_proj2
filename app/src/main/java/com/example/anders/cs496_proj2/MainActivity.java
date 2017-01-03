@@ -73,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
     private ViewPager.OnPageChangeListener listener = new ViewPager.OnPageChangeListener() {
         @Override
         public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
         }
 
         @Override
@@ -106,34 +107,24 @@ public class MainActivity extends AppCompatActivity {
                 AccessToken.setCurrentAccessToken(loginResult.getAccessToken());
 
                 new GraphRequest(
-                        AccessToken.getCurrentAccessToken(),
-                        "/me/taggable_friends",
-                        null,
-                        HttpMethod.GET,
-                        new GraphRequest.Callback() {
-                            public void onCompleted(GraphResponse response) {
-                                LoginManager.getInstance().logOut();
-                                try {
-                                    JSONObject res = response.getJSONObject();
-                                    final JSONArray data = res.getJSONArray("data");
-                                    System.out.println(data.toString());
-                                    for (int i = 0; i < data.length(); i++) {
-                                        data.getJSONObject(i).remove("picture");
-                                        System.out.println("name : " + data.getJSONObject(i).getString("name"));
-                                    }
-                                    /*
-                                    new Thread() {
-                                        public void run() {
-                                            saveInDB(data);
-                                        }
-                                    }.start();
-                                    */
-                                    new ClearDB().execute(data);
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
+                    AccessToken.getCurrentAccessToken(),
+                    "/me/taggable_friends",
+                    null,
+                    HttpMethod.GET,
+                    new GraphRequest.Callback() {
+                        public void onCompleted(GraphResponse response) {
+                            LoginManager.getInstance().logOut();
+                            try {
+                                System.out.println(response.toString());
+                                JSONObject res = response.getJSONObject();
+                                final JSONArray data = res.getJSONArray("data");
+                                new AfterGetFriendsList().execute(data);
+                            } catch (Exception e) {
+                                e.printStackTrace();
                             }
+
                         }
+                    }
                 ).executeAsync();
             }
 
@@ -271,6 +262,29 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public class AfterGetFriendsList extends AsyncTask<JSONArray, Void, JSONArray> {
+        @Override
+        protected JSONArray doInBackground(JSONArray... data) {
+            System.out.println(data.toString());
+            for (int i = 0; i < data[0].length(); i++) {
+                try {
+                    //TODO : send http request by picture url to get profile photo, and convert it to Bitmap, then save it into the DB.
+                    data[0].getJSONObject(i).remove("picture");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            return data[0];
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... params) {}
+
+        @Override
+        protected void onPostExecute(JSONArray data) { new ClearDB().execute(data); }
+    }
+
     public class ClearDB extends AsyncTask<JSONArray, Void, JSONArray> {
         @Override
         protected JSONArray doInBackground(JSONArray... data) {
@@ -303,9 +317,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onProgressUpdate(Void... params) {
-
-        }
+        protected void onProgressUpdate(Void... params) {}
 
         @Override
         protected void onPostExecute(JSONArray data) {
@@ -328,7 +340,6 @@ public class MainActivity extends AppCompatActivity {
                     OutputStream out_stream = conn.getOutputStream();
 
                     out_stream.write(data[0].getJSONObject(i).toString().getBytes("UTF-8"));
-                    //System.out.println(data.getJSONObject(i).toString());
                     out_stream.close();
 
                     conn.connect();
@@ -347,9 +358,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onProgressUpdate(Void... params) {
-
-        }
+        protected void onProgressUpdate(Void... params) {}
 
         @Override
         protected void onPostExecute(Void null_value) {
