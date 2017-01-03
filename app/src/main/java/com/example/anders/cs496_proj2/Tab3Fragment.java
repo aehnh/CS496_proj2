@@ -36,17 +36,18 @@ import java.util.Map;
 
 public class Tab3Fragment extends Fragment {
     static final int NEW_POST_REQUEST = 99;
+    static int id;
 
-    ArrayList<Post> posts;
-    View view;
-    ListView listView;
-    CustomAdapter adapter;
-    FloatingActionButton fab;
+    static ArrayList<Post> posts;
+    private View view;
+    private ListView listView;
+    private CustomAdapter adapter;
+    private FloatingActionButton fab;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
         view = inflater.inflate(R.layout.tab3, container, false);
+        id = 0;
         /*
         String json = "";
         try {
@@ -77,7 +78,7 @@ public class Tab3Fragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent i = new Intent(getActivity().getApplicationContext(), PostViewActivity.class);
-                i.putExtra("post", posts.get(position));
+                i.putExtra("position", position);
                 startActivity(i);
             }
         });
@@ -153,22 +154,8 @@ public class Tab3Fragment extends Fragment {
                 JSONArray jarray = new JSONArray(param);
                 for (int i = 0; i < jarray.length(); i++) {
                     JSONObject jobject = jarray.getJSONObject(i);
-                    JSONArray comments_jarray = jobject.getJSONArray("comments");
-                    ArrayList<Comment> comments = new ArrayList<>();
-                    Post post;
-                    if (comments_jarray.length() != 0) {
-                        for (int j = 0; j < comments_jarray.length(); j++) {
-                            Comment comment = new Comment(comments_jarray.getJSONObject(j).getString("comment_title"),
-                                    comments_jarray.getJSONObject(j).getString("comment_content"));
-                            comments.add(comment);
-                        }
-
-                        post = new Post(jobject.getString("title"), jobject.getString("question"), comments);
-                        posts.add(post);
-                    } else {
-                        post = new Post(jobject.getString("title"), jobject.getString("question"));
-                        posts.add(post);
-                    }
+                    Post post = new Post(Integer.parseInt(jobject.getString("id")), jobject.getString("title"), jobject.getString("question"), jobject.getJSONArray("comments"));
+                    posts.add(post);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -192,6 +179,7 @@ public class Tab3Fragment extends Fragment {
                 conn.setRequestProperty("Content-Type", "application/json; charset=utf-8");
 
                 new_post = new JSONObject();
+                new_post.put("id", Integer.toString(id));
                 new_post.put("title", params[0]);
                 new_post.put("question", params[1]);
                 new_post.put("image", "");
@@ -227,23 +215,20 @@ public class Tab3Fragment extends Fragment {
         @Override
         protected void onPostExecute(JSONObject param) {
             try {
+                String id_string = param.getString("id");
                 String title = param.getString("title");
                 String question = param.getString("question");
                 JSONArray comments = param.getJSONArray("comments");
 
-                ArrayList<Comment> cmts = new ArrayList<>();
-                for (int i = 0; i < comments.length(); i++) {
-                    Comment comment = new Comment(comments.getJSONObject(i).getString("comment_title"),
-                            comments.getJSONObject(i).getString("comment_content"));
-                    cmts.add(comment);
-                }
-
-                Post new_post = new Post(title, question, cmts);
+                Post new_post = new Post(Integer.parseInt(id_string), title, question, comments);
                 posts.add(new_post);
+                id++;
             } catch (Exception e) {
 
             }
             adapter.notifyDataSetChanged();
         }
     }
+
+    public Post getPost(int position) { return posts.get(position); }
 }
