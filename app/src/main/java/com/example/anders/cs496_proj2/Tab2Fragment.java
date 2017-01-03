@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -200,6 +202,33 @@ public class Tab2Fragment extends Fragment {
                     e.printStackTrace();
                 } */
                 photo = BitmapFactory.decodeFile(mCurrentPhotoPath);
+                try {
+                    ExifInterface ei = new ExifInterface(mCurrentPhotoPath);
+                    int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                            ExifInterface.ORIENTATION_UNDEFINED);
+
+                    switch (orientation) {
+
+                        case ExifInterface.ORIENTATION_ROTATE_90:
+                            rotateImage(photo, 90);
+                            break;
+
+                        case ExifInterface.ORIENTATION_ROTATE_180:
+                            rotateImage(photo, 180);
+                            break;
+
+                        case ExifInterface.ORIENTATION_ROTATE_270:
+                            rotateImage(photo, 270);
+                            break;
+
+                        case ExifInterface.ORIENTATION_NORMAL:
+
+                        default:
+                            break;
+                    }
+                } catch(IOException e) {
+                    e.printStackTrace();
+                }
             } else if(requestCode == 2) {
                 if(data != null) {
                     try {
@@ -215,12 +244,15 @@ public class Tab2Fragment extends Fragment {
             if(photo.getHeight() > 2048) {
                 photo = Bitmap.createScaledBitmap(photo, photo.getWidth() * 2048 / photo.getHeight(), 2048, true);
             }
+
+
             //GridViewAdapter.bitmaps.add(0, photo);
 
             // TODO send to server here
             try {
                 String encoded = getStringFromBitmap(photo);
-                JSONObject jsonified = new JSONObject("{\"image\":\"" + encoded + "\"}");
+                JSONObject jsonified = new JSONObject(/*"{\"image\":\"" + encoded + "\"}"*/);
+                jsonified.put("image", encoded);
                 Log.d("stringed", encoded);
 
                 String extracted = jsonified.getString("image");
@@ -245,5 +277,11 @@ public class Tab2Fragment extends Fragment {
     private Bitmap getBitmapFromString(String string) {
         byte[] b = Base64.decode(string, Base64.DEFAULT);
         return BitmapFactory.decodeByteArray(b, 0, b.length);
+    }
+    private static Bitmap rotateImage(Bitmap source, float angle) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(angle);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
+                matrix, true);
     }
 }
